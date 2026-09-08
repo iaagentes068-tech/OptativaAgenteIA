@@ -1,22 +1,10 @@
 {
   "artigos": [
     {
-      "titulo": "Código Civil",
-      "autor": "Verbo Jurídico",
-      "ano": 2026,
-      "link_pdf": "https://www.verbojuridico.com.br/vademecum/cod-civil-atualizado.pdf"
-    },
-    {
-      "titulo": "Código de Defesa do Consumidor",
-      "autor": "Fundação Procon-SP",
-      "ano": 2026,
-      "link_pdf": "https://www.procon.sp.gov.br/wp-content/uploads/2026/01/CDC-2026-site.pdf"
-    },
-    {
       "titulo": "Constituição da República Federativa do Brasil de 1988",
-      "autor": "Senado Federal",
-      "ano": 2016,
-      "link_pdf": "https://www2.senado.leg.br/bdsf/bitstream/handle/id/518231/CF88_Livro_EC91_2016.pdf"
+      "autor": "Juspodivm",
+      "ano": 2026,
+      "link_pdf": "https://juspodivmdigital.com.br/cdn/pdf/JUS3596-Degustacao.pdf"
     },
     {
       "titulo": "Código Penal",
