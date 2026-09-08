@@ -2,21 +2,33 @@
   "artigos": [
     {
       "titulo": "Constituição da República Federativa do Brasil de 1988",
-      "autor": "Supremo Tribunal Federal",
+      "autor": "Câmara dos Deputados",
       "ano": 2026,
       "link_pdf": "https://www2.camara.leg.br/legin/fed/consti/1988/constituicao-1988-5-outubro-1988-322142-normaatualizada-pl.pdf"
     },
     {
       "titulo": "Código Civil",
-      "autor": "Verbo Jurídico",
-      "ano": 2017,
-      "link_pdf": "https://www.verbojuridico.com.br/vademecum/cod-civil-atualizado.pdf"
+      "autor": "Câmara dos Deputados",
+      "ano": 2026,
+      "link_pdf": "https://www2.camara.leg.br/legin/fed/lei/2002/lei-10406-10-janeiro-2002-432893-normaatualizada-pl.pdf"
+    },
+    {
+      "titulo": "Código Penal",
+      "autor": "Câmara dos Deputados",
+      "ano": 2026,
+      "link_pdf": "https://www2.camara.leg.br/legin/fed/declei/1940-1949/decreto-lei-2848-7-dezembro-1940-412868-normaatualizada-pe.pdf"
+    },
+    {
+      "titulo": "Código de Processo Penal",
+      "autor": "Câmara dos Deputados",
+      "ano": 2026,
+      "link_pdf": "https://www2.camara.leg.br/legin/fed/declei/1940-1949/decreto-lei-3689-3-outubro-1941-322206-normaatualizada-pe.pdf"
     },
     {
       "titulo": "Código de Defesa do Consumidor",
-      "autor": "Fundação Procon-SP",
+      "autor": "Câmara dos Deputados",
       "ano": 2026,
-      "link_pdf": "https://www.procon.sp.gov.br/wp-content/uploads/2026/01/CDC-2026-site.pdf"
+      "link_pdf": "https://www2.camara.leg.br/legin/fed/lei/1990/lei-8078-11-setembro-1990-365086-normaatualizada-pl.pdf"
     }
   ]
 }
