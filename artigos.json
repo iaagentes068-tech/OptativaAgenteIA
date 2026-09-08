@@ -1,6 +1,12 @@
 {
   "artigos": [
     {
+      "titulo": "Constituição da República Federativa do Brasil de 1988",
+      "autor": "Juspodivm",
+      "ano": 2026,
+      "link_pdf": "https://juspodivmdigital.com.br/cdn/pdf/JUS3596-Degustacao.pdf"
+    },
+    {
       "titulo": "Código Civil",
       "autor": "Verbo Jurídico",
       "ano": 2026,
@@ -13,22 +19,10 @@
       "link_pdf": "https://www.procon.sp.gov.br/wp-content/uploads/2026/01/CDC-2026-site.pdf"
     },
     {
-      "titulo": "Constituição da República Federativa do Brasil de 1988",
-      "autor": "Supremo Tribunal Federal",
-      "ano": 2026,
-      "link_pdf": "https://www2.camara.leg.br/legin/fed/consti/1988/constituicao-1988-5-outubro-1988-322142-normaatualizada-pl.pdf"
-    },
-    {
-      "titulo": "Código Penal",
+      "titulo": "Coletânea Básica Penal",
       "autor": "Senado Federal",
       "ano": 2026,
-      "link_pdf": "https://www2.senado.leg.br/bdsf/bitstream/handle/id/863831/codigo_penal_9ed.pdf?sequence=1&isAllowed=y"
-    },
-    {
-      "titulo": "Código de Processo Penal",
-      "autor": "Senado Federal",
-      "ano": 2019,
-      "link_pdf": "https://www2.senado.leg.br/bdsf/bitstream/handle/id/554332/codigo_de_processo_penal_2ed.pdf?sequence=1&isAllowed=y"
+      "link_pdf": "https://www2.senado.leg.br/bdsf/bitstream/handle/id/863851/Coletanea_basica_penal_16ed.pdf"
     }
   ]
 }
