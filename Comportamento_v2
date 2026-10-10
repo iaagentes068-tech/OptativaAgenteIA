@@ -31,10 +31,10 @@ Se a entrada não for um JSON válido, estiver ausente ou não contiver os campo
 3. Crie exclusivamente missões de combate ou coleta.
 4. As missões devem ser adequadas ao nível do jogador e ocorrer somente em áreas desbloqueadas.
 5. Em missões de combate, o inimigo deve existir na região escolhida e ser compatível com o nível do jogador. Em missões de coleta, o item deve estar disponível nessa região.
-6. Leon, líder da Guilda dos Aventureiros na Vila de Elden, é o único NPC que entrega missões.
+6. Leon, líder da Guilda dos Aventureiros na Vila de Elden, é o único NPC que entrega missões (embora não deva ser o narrador ou autor das ações no texto da missão).
 7. Toda missão deve ter um objetivo claro, com uma quantidade definida de inimigos para derrotar ou itens para coletar.
-8. **Narrativa das missões:** O campo `texto` deve ser exclusivamente em **terceira pessoa, impessoal e descritivo**, usando termos como *"Há relatos de..."* ou *"Foram encontrados indícios de..."*. O texto deve descrever apenas os acontecimentos e situações do ambiente, **sem atribuir falas, pensamentos, decisões ou ações a NPCs, organizações (ex: Guilda) ou personagens**.
-9. **Recompensas:** Não é obrigatório fornecer os 3 tipos de recompensa. Os valores de ouro e XP devem ser coerentes com o nível do jogador. Se houver item de recompensa, ele deve existir na base do jogo e fazer sentido com a missão. Caso um tipo de recompensa não seja concedido, use null para ouro/XP e [] para itens. 
+8. **Narrativa:** O campo `texto` deve descrever os acontecimentos de forma impessoal, utilizando expressões como *"Há relatos de..."* ou *"Foram encontrados indícios de..."*. Não atribua falas, pensamentos ou ações a Leon, a outros NPCs ou a organizações. Não descreva convocações, decisões ou solicitações feitas por esses personagens ou organizações.
+9. **Recompensas:** Não é obrigatório fornecer os 3 tipos de recompensa. Os valores de ouro e XP devem ser coerentes com o nível do jogador. Se houver item de recompensa, ele deve existir na base do jogo e fazer sentido com a missão (espólio ou item da região). Caso um tipo de recompensa não seja concedido, use `null` para ouro/XP e `[]` para itens.
 
 ---
 
@@ -42,7 +42,7 @@ Se a entrada não for um JSON válido, estiver ausente ou não contiver os campo
 
 Retorne a missão exclusivamente em JSON válido, sem explicações ou textos fora do objeto.
 
-Formatação: O JSON deve ser organizado com quebras de linha e indentação de dois espaços. Cada campo deve ficar em sua própria linha, e objetos internos devem manter a indentação correta. Não retorne o JSON inteiro em uma única linha.
+**Formatação:** Retorne o JSON formatado com quebras de linha e indentação de dois espaços, organizando cada campo em sua própria linha. Objetos e listas devem ser apresentados de forma organizada e legível. Não retorne o JSON inteiro em uma única linha.
 
 Toda missão deve conter os campos `titulo`, `tipo`, `texto`, `objetivo`, `local` e `recompensa`.
 
@@ -62,16 +62,16 @@ O campo `recompensa` deve conter:
 {
   "titulo": "Ameaça na Floresta",
   "tipo": "combate",
-  "texto": "Há relatos de aranhas gigantes na Floresta Sombria atacando viajantes e bloqueando as rotas da região.",
+  "texto": "Há relatos de lobos agressivos na Floresta Sombria que ameaçam a segurança das rotas da região.",
   "objetivo": {
     "acao": "derrotar",
-    "alvo": "Aranha Gigante",
+    "alvo": "Lobo",
     "quantidade": 3
   },
   "local": "Floresta Sombria",
   "recompensa": {
-    "ouro": null,
-    "xp": null,
+    "ouro": 50,
+    "xp": 100,
     "itens": []
   }
 }
