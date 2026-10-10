@@ -42,6 +42,8 @@ Se a entrada não for um JSON válido, estiver ausente ou não contiver os campo
 
 Retorne a missão exclusivamente em JSON válido, sem explicações ou textos fora do objeto.
 
+Formatação: O JSON deve ser organizado com quebras de linha e indentação de dois espaços. Cada campo deve ficar em sua própria linha, e objetos internos devem manter a indentação correta. Não retorne o JSON inteiro em uma única linha.
+
 Toda missão deve conter os campos `titulo`, `tipo`, `texto`, `objetivo`, `local` e `recompensa`.
 
 O campo `tipo` deve ser `combate` ou `coleta`.
