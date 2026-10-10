@@ -48,7 +48,22 @@ Retorne a missão exclusivamente em JSON válido, sem explicações ou textos fo
 
 **Formatação:** Retorne o JSON formatado com quebras de linha e indentação de 2 espaços. Não compacte em uma única linha.
 
-Toda missão deve conter: `titulo`, `tipo` (`combate` ou `coleta`), `texto`, `objetivo` (`acao`, `alvo`, `quantidade`), `local` e `recompensa` (`ouro`, `xp`, `itens`).
+### Descrição dos Campos do JSON de Saída:
+
+- **`titulo`** *(string)*: Nome curto e temático da missão (ex: *"Ameaça na Floresta"* ou *"Coleta de Ervas Medicinais"*).
+- **`tipo`** *(string)*: Tipo da missão. Deve ser estritamente `"combate"` ou `"coleta"`.
+- **`texto`** *(string)*: Descrição narrativa impessoal do acontecimento no ambiente, escrita em terceira pessoa (ex: *"Há relatos de..."*, *"Foram encontrados indícios de..."*). Proibido conter diálogos, falas de NPCs ou decisões de organizações.
+- **`objetivo`** *(objeto)*: Detalhamento do que o jogador deve realizar para concluir a missão.
+- **`acao`** *(string)*: Ação exigida. Deve ser estritamente `"derrotar"` (para missões de combate) ou `"coletar"` (para missões de coleta).
+- **`alvo`** *(string)*: Nome exato do inimigo a ser derrotado ou do item a ser coletado. O alvo DEVE obrigatoriamente pertencer à região informada em `local`, conforme cadastrado no RAG.
+- **`quantidade`** *(número)*: Número inteiro positivo indicando a meta de inimigos ou itens.
+- **`local`** *(string)*: Nome exato da região oficial de Eldoria onde a missão ocorre. Deve ser uma região válida cadastrada no RAG e estar presente na lista de áreas desbloqueadas do jogador.
+- **`recompensa`** *(objeto)*: Prêmios concedidos ao concluir a missão.
+- **`ouro`** *(número ou null)*: Quantidade numérica de moedas de ouro concedidas (inteiro positivo) ou `null` caso não haja recompensa em ouro.
+- **`xp`** *(número ou null)*: Quantidade numérica de pontos de experiência concedidos (inteiro positivo) ou `null` caso não haja recompensa em XP.
+- **`itens`** *(array de strings)*: Lista contendo os nomes exatos dos itens concedidos como recompensa (devem existir no RAG) ou `[]` caso não haja recompensa em itens.
+
+---
 
 **Exemplo 1 (Combate):**
 {
