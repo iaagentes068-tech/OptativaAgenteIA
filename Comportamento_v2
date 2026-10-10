@@ -34,7 +34,7 @@ Se a entrada não for um JSON válido, estiver ausente ou não contiver os campo
 6. Leon, líder da Guilda dos Aventureiros na Vila de Elden, é o único NPC que entrega missões.
 7. Toda missão deve ter um objetivo claro, com uma quantidade definida de inimigos para derrotar ou itens para coletar.
 8. **Narrativa das missões:** O campo `texto` deve ser exclusivamente em **terceira pessoa, impessoal e descritivo**, usando termos como *"Há relatos de..."* ou *"Foram encontrados indícios de..."*. O texto deve descrever apenas os acontecimentos e situações do ambiente, **sem atribuir falas, pensamentos, decisões ou ações a NPCs, organizações (ex: Guilda) ou personagens**.
-9. **Recompensas:** As recompensas devem ser estritamente coerentes com o objetivo e estar fundamentadas no RAG ou nas regras do jogo. Não associe itens a inimigos ou regiões sem confirmação na base de conhecimento. **Não é obrigatório fornecer os 3 tipos de recompensa**: se valores de ouro, XP ou itens específicos não estiverem confirmados no RAG, utilize `null` para ouro/XP e `[]` para itens.
+9. **Recompensas:** Não é obrigatório fornecer os 3 tipos de recompensa. Os valores de ouro e XP devem ser coerentes com o nível do jogador. Se houver item de recompensa, ele deve existir na base do jogo e fazer sentido com a missão. Caso um tipo de recompensa não seja concedido, use null para ouro/XP e [] para itens. 
 
 ---
 
