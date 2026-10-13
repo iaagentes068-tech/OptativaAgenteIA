@@ -1,0 +1,437 @@
+{
+  "name": "JogoMissao",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Informe um JSON contendo o nivel e as areas_desbloqueadas do jogador.\nExemplo: \n{\n  \"nivel\": 2,\n  \"areas_desbloqueadas\": [\n    \"Vila de Elden\",\n    \"Floresta Sombria\"\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        320,
+        240
+      ],
+      "id": "5fe0a924-0b78-4cb8-8bb1-348563b55bb0",
+      "name": "When chat message received",
+      "webhookId": "3903fdb1-2829-4e92-b374-c2fdeb8ee651"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "Prompt de Comportamento — Agente de Missões de Eldoria\nVocê é um agente de IA responsável por gerar missões para um RPG de ação e fantasia ambientado no mundo de Eldoria. As missões devem respeitar o nível do jogador, suas áreas desbloqueadas e as informações recuperadas do RAG.\n1. Entrada do jogador\nA entrada deve ser um JSON válido contendo os campos nivel e areas_desbloqueadas.\nExemplo:\n{\n  \"nivel\": 2,\n  \"areas_desbloqueadas\": [\n    \"Vila de Elden\",\n    \"Floresta Sombria\"\n  ]\n}\nnivel: número inteiro positivo que representa o nível do jogador.\nareas_desbloqueadas: lista de nomes de regiões que o jogador pode acessar.\nSe a entrada estiver ausente ou inválida, solicite os dados corretos antes de gerar uma missão.\n2. Busca obrigatória no RAG\nAntes de gerar qualquer missão, consulte o RAG para localizar e verificar os nomes e as informações necessárias.\nRegras de busca\nUse os documentos recuperados pelo RAG como única fonte de verdade sobre o universo de Eldoria.\nProcure os nomes oficiais no RAG antes de utilizá-los. Não invente nomes, não utilize conhecimento externo e não presuma que algo existe apenas porque é comum em outros RPGs.\nConfirme não apenas a existência do nome, mas também sua relação com as demais informações. Por exemplo, encontrar o nome de um inimigo e o nome de uma região não comprova que esse inimigo aparece naquela região.\nSe a primeira busca não retornar informações suficientes, tente outra consulta com termos relevantes ou com o nome exato do item, inimigo ou região.\nNão considere uma informação confirmada se ela não estiver presente nos resultados recuperados.\nSe, após as buscas, não houver informações suficientes para criar uma missão válida, não invente dados. Informe que não foi possível gerar a missão com as informações disponíveis.\n3. Validação obrigatória das áreas desbloqueadas\nAntes de gerar a missão, compare cada nome de areas_desbloqueadas com as regiões oficiais encontradas no RAG.\nSe qualquer região não existir no universo de Eldoria, interrompa o processo.\nNão ignore, corrija, substitua ou aceite regiões inválidas automaticamente.\nInforme que a região não foi encontrada no universo de Eldoria e solicite uma nova entrada.\nSe todas as regiões forem válidas, escolha exclusivamente uma das regiões presentes em areas_desbloqueadas.\nNunca gere uma missão em uma região bloqueada, mesmo que ela exista no RAG.\n4. Regras para criar missões\nTipos de missão\nExistem somente dois tipos permitidos:\ncombate\ncoleta\nEscolha o tipo de acordo com as informações confirmadas pelo RAG. Alterne entre os tipos quando houver informação sobre a última missão gerada. Se essa informação não estiver disponível, escolha qualquer tipo válido.\nMissões de combate\nAntes de criar uma missão de combate, confirme no RAG que:\nO inimigo existe e possui um nome oficial.\nO inimigo aparece na região escolhida.\nO nível do inimigo ou as informações disponíveis permitem avaliar a compatibilidade com o nível do jogador.\nNão invente inimigos nem os associe a regiões sem evidências recuperadas do RAG.\nMissões de coleta\nAntes de criar uma missão de coleta, confirme no RAG que:\nO item existe e possui um nome oficial.\nO item pode ser coletado na região escolhida.\nNão transforme um item vendido ou recebido como recompensa em um recurso coletável do ambiente sem confirmação explícita no RAG.\nCompatibilidade com o universo\nO alvo da missão deve pertencer à região escolhida, conforme as informações recuperadas do RAG. Não mova inimigos ou itens entre regiões e não invente relações ausentes nos documentos.\n5. NPCs e narrativa\nLeon, localizado na Vila de Elden, é o único NPC responsável por entregar missões.\nEntretanto, o campo texto deve ser impessoal e escrito em terceira pessoa. Leon não deve ser o narrador da missão.\nUse construções como:\n\"Há relatos de criaturas hostis na região...\"\n\"Foram encontrados indícios de recursos naturais...\"\n\"A presença de inimigos tem sido observada nas proximidades...\"\nNão atribua falas, pedidos, decisões, pensamentos ou ações a Leon, a outros NPCs ou a organizações.\n6. Recompensas\nAs recompensas devem ser coerentes com o nível do jogador e a dificuldade da missão.\nouro: número inteiro não negativo ou null.\nxp: número inteiro não negativo ou null.\nitens: lista de itens oficiais do RAG ou uma lista vazia [].\nOs valores de ouro e XP podem ser definidos pelo agente de acordo com regras de balanceamento, pois não precisam estar cadastrados no RAG. Entretanto, nomes de itens concedidos como recompensa devem existir no RAG.\nNão invente itens para recompensas. Se não houver uma recompensa de determinado tipo, use null para ouro ou XP e [] para itens.\n7. Formato obrigatório da resposta\nQuando a entrada for válida e houver informações suficientes, retorne exclusivamente um JSON válido, sem explicações, comentários ou textos fora do objeto.\nFormate o JSON com quebras de linha e indentação de dois espaços.\nA estrutura deve seguir este modelo:\n{\n  \"titulo\": \"Título da missão\",\n  \"tipo\": \"combate\",\n  \"texto\": \"Descrição impessoal da missão.\",\n  \"objetivo\": {\n    \"acao\": \"derrotar\",\n    \"alvo\": \"Nome oficial do inimigo ou item\",\n    \"quantidade\": 3\n  },\n  \"local\": \"Nome oficial da região\",\n  \"recompensa\": {\n    \"ouro\": 50,\n    \"xp\": 75,\n    \"itens\": []\n  }\n}\nRegras dos campos\ntitulo: string com um título curto e temático.\ntipo: somente \"combate\" ou \"coleta\".\ntexto: descrição impessoal da missão, sem diálogos.\nobjetivo: objeto que descreve o que deve ser feito.\nobjetivo.acao: \"derrotar\" para combate ou \"coletar\" para coleta.\nobjetivo.alvo: nome oficial do inimigo ou item, confirmado no RAG e associado à região.\nobjetivo.quantidade: número inteiro positivo.\nlocal: nome oficial de uma região válida e desbloqueada.\nrecompensa.ouro: inteiro não negativo ou null.\nrecompensa.xp: inteiro não negativo ou null.\nrecompensa.itens: array de strings contendo apenas itens oficiais do RAG, ou [].\nOs valores do modelo são apenas exemplos. Escolha valores adequados para a missão gerada.\n8. Validação final obrigatória\nAntes de retornar a missão, verifique:\nA entrada do jogador é válida.\nTodas as regiões desbloqueadas existem no RAG.\nA região escolhida está na lista de áreas desbloqueadas.\nO tipo da missão é válido.\nO nome do inimigo ou item foi encontrado no RAG.\nA associação entre o alvo e a região foi confirmada.\nA compatibilidade com o nível do jogador foi verificada com base nas informações disponíveis.\nOs itens de recompensa existem no RAG.\nA estrutura de saída é um JSON válido e contém todos os campos exigidos.\nSe alguma região informada for inválida, interrompa a geração e solicite uma nova entrada. Se os dados necessários para a missão não puderem ser confirmados após as buscas, não gere a missão.\nRegra final: nunca substitua uma busca no RAG por uma suposição. Encontrar um nome não é suficiente; confirme também o contexto e as relações necessárias antes de utilizá-lo.\n\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        580,
+        240
+      ],
+      "id": "90f85f22-e33a-458e-b839-ec62513ae490",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        540,
+        480
+      ],
+      "id": "1442f5af-9c79-4c42-8f11-b4e182ff4856",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "Vu1AvwVeLUcvBTMt",
+          "name": "OpenAi account 23"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        680,
+        480
+      ],
+      "id": "0f897201-742a-485d-95a2-fda1a5a5a9e8",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "value": "iaagentes068-tech",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "OptativaAgenteIA",
+          "mode": "name"
+        },
+        "filePath": "artigos.json",
+        "additionalParameters": {}
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e0b4759c-5a9b-456b-8936-41ed29d7cd7a",
+      "name": "GitHub",
+      "webhookId": "aed79c90-83b9-4afd-ac7f-c5c0c5dcfd62",
+      "credentials": {
+        "githubApi": {
+          "id": "tHj3HzHXWfNclD8f",
+          "name": "GitHub account 21"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{$json[\"link_pdf\"]}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "adf1118f-8e88-49c7-9d1b-8de989c1816a",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        660,
+        0
+      ],
+      "id": "3aa9b742-bafd-4030-ae8a-09b2e5dc87dd",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1) Recebe os itens do nó anterior\nlet docs = $input.all().map(i => i.json);\n\nif (Array.isArray(docs[0])) {\n  docs = docs[0];\n}\n\n// 2) Limpa o texto extraído\nconst clean = (s = '') =>\n  s.replace(/\\u00ad/g, '')\n   .replace(/[ \\t]+\\n/g, '\\n')\n   .replace(/\\n{3,}/g, '\\n\\n')\n   .trim();\n\n// 3) Prepara os chunks estruturados por seções/fichas\nconst out = [];\n\nfor (const d of docs) {\n  const fullText = clean(d.text || '');\n\n  if (!fullText) continue;\n\n  // Divide o texto pelos divisores visuais dos seus documentos\n  const sections = fullText.split(/-------------------------------------------------------------------------------|===============================================================================/);\n\n  let chunkIdx = 1;\n\n  for (const sec of sections) {\n    const cleanSection = sec.trim();\n\n    // Filtra cabeçalhos curtos ou blocos vazios\n    if (cleanSection.length > 30) {\n      out.push({\n        json: {\n          text: cleanSection,\n          metadata: {\n            titulo: d.titulo || 'Documento de Eldoria',\n            author: d.autor || 'Grupo de Agentes de IA — Optativa',\n            ano: d.ano || 2026,\n            source: d.link_pdf || '',\n            pages: d.numpages || null,\n            pdf_version: d.info?.PDFFormatVersion || null,\n            chunk: chunkIdx++\n          }\n        }\n      });\n    }\n  }\n}\n\nreturn out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        860,
+        0
+      ],
+      "id": "d519d944-dac2-4b75-b854-f73b1613d114",
+      "name": "Chunk"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pega dinamicamente o primeiro buffer binário disponível, evitando o erro de nome\nconst binaryKey = Object.keys($input.item.binary || {})[0];\nif (!binaryKey) {\n  throw new Error(\"Nenhum arquivo binário foi encontrado na entrada do nó.\");\n}\n\nconst binaryData = await this.helpers.getBinaryDataBuffer(0, binaryKey);\nconst raw = binaryData.toString('utf-8');\n\n// Converte o texto do JSON em objeto\nconst data = JSON.parse(raw);\n\n// Mapeia cada artigo do JSON como um item separado para o fluxo\nreturn data.artigos.map((a, i) => ({\n  json: {\n    id: i + 1,\n    titulo: a.titulo,\n    autor: a.autor,\n    ano: a.ano,\n    link_pdf: a.link_pdf\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "05babc91-325c-43b8-8f45-38ac42f77478",
+      "name": "Code - Converte JSON",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        40,
+        200
+      ],
+      "id": "15c5a5b0-0c5e-41ce-ad6e-9d7010fda692",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "id"
+        },
+        "embeddingBatchSize": 250,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        1080,
+        0
+      ],
+      "id": "9b4ea9e1-ba19-43e4-971b-823d4881d800",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "md1YSid6q1poPwjf",
+          "name": "Supabase account 11"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1060,
+        200
+      ],
+      "id": "e5f73144-f3a7-4e3b-8284-a68d8d139b6b",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "Vu1AvwVeLUcvBTMt",
+          "name": "OpenAi account 23"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        200
+      ],
+      "id": "01ab7254-2a6d-417c-bbce-930b28c80354",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Consulte a base de conhecimento do universo do jogo sempre que precisar obter informações sobre a história, regiões, personagens, inimigos ou itens. Utilize essas informações para criar missões coerentes com o universo e com o estado atual do jogador. Não invente elementos que não estejam presentes na base de conhecimento.",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "topK": 30,
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        820,
+        400
+      ],
+      "id": "f7ecd396-d755-4be7-a729-d49677944996",
+      "name": "Supabase Vector Store2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "md1YSid6q1poPwjf",
+          "name": "Supabase account 11"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        920,
+        620
+      ],
+      "id": "abfcc494-7919-4426-8a86-70bb5584efce",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "Vu1AvwVeLUcvBTMt",
+          "name": "OpenAi account 23"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub": {
+      "main": [
+        [
+          {
+            "node": "Code - Converte JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Chunk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Converte JSON": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chunk": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store2": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store2",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "eea93088-ade5-4f57-af0b-5c4cac14081d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2ef09b3ff7c0d13f07784f5a16ad0714adec809b2e8496f0ab7a6deb36f32a14"
+  },
+  "id": "sS2liRIdZSxp4VYf",
+  "tags": []
+}
