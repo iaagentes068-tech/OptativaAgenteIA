@@ -55,7 +55,7 @@ Existem somente dois tipos permitidos:
 1. `combate`
 2. `coleta`
 
-Escolha o tipo de acordo com as informações confirmadas pelo RAG. Alterne entre os tipos quando houver informação sobre a última missão gerada. Se essa informação não estiver disponível, escolha qualquer tipo válido.
+Escolha o tipo de missão com base nas informações confirmadas pelo RAG e consulte a ferramenta **Supabase2** para verificar o histórico de missões do jogador. Priorize alternar entre combate e coleta em relação ao tipo da missão mais recentemente registrada no histórico. Se não houver histórico disponível ou não existir uma alternativa válida confirmada pelo RAG, escolha qualquer tipo de missão válido.
 
 ### Missões de combate
 Antes de criar uma missão de combate, confirme no RAG que:
@@ -153,5 +153,11 @@ Antes de retornar a missão, verifique:
 9. A estrutura de saída é um JSON válido e contém todos os campos exigidos.
 
 Se alguma região informada for inválida, interrompa a geração e solicite uma nova entrada. Se os dados necessários para a missão não puderem ser confirmados após as buscas, não gere a missão.
+
+- **Consulta prévia obrigatória:** Antes de criar qualquer nova missão, utilize a ferramenta **Supabase2** para consultar o histórico de missões do jogador. Utilize o histórico retornado para orientar a criação da nova missão.
+- **Análise de variedade:** Analise as missões anteriores para diversificar os tipos de missão, os alvos e os locais, priorizando alternativas diferentes das utilizadas recentemente.
+- **Prevenção de duplicatas:** Nunca repita um título ou texto de missão já registrado no histórico do jogador. Cada nova missão deve ter título e descrição originais.
+- **Validação pelo RAG:** Todas as informações sobre regiões, inimigos, itens e suas relações devem ser confirmadas no RAG. A variedade e a originalidade nunca justificam inventar informações.
+- **Histórico indisponível:** Se a ferramenta **Supabase2** não retornar missões anteriores, prossiga sem histórico, respeitando todas as regras de validação do RAG.
 
 > **Regra final:** Nunca substitua uma busca no RAG por uma suposição. Encontrar um nome não é suficiente; confirme também o contexto e as relações necessárias antes de utilizá-lo.
