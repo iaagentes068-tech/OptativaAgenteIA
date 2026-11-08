@@ -1,0 +1,34 @@
+{
+  "artigos": [
+    {
+      "titulo": "História Oficial de Eldoria",
+      "autor": "Grupo de Agentes de IA — Optativa",
+      "ano": 2026,
+      "link_pdf": "https://raw.githubusercontent.com/iaagentes068-tech/OptativaAgenteIA/main/HistoriaOficial.pdf"
+    },
+    {
+      "titulo": "Inimigos Oficiais de Eldoria",
+      "autor": "Grupo de Agentes de IA — Optativa",
+      "ano": 2026,
+      "link_pdf": "https://raw.githubusercontent.com/iaagentes068-tech/OptativaAgenteIA/main/InimigosOficial.pdf"
+    },
+    {
+      "titulo": "Itens Oficiais de Eldoria",
+      "autor": "Grupo de Agentes de IA — Optativa",
+      "ano": 2026,
+      "link_pdf": "https://raw.githubusercontent.com/iaagentes068-tech/OptativaAgenteIA/main/ItensOficial.pdf"
+    },
+    {
+      "titulo": "Personagens Oficiais de Eldoria",
+      "autor": "Grupo de Agentes de IA — Optativa",
+      "ano": 2026,
+      "link_pdf": "https://raw.githubusercontent.com/iaagentes068-tech/OptativaAgenteIA/main/PesonagensOficial.pdf"
+    },
+    {
+      "titulo": "Regiões Oficiais de Eldoria",
+      "autor": "Grupo de Agentes de IA — Optativa",
+      "ano": 2026,
+      "link_pdf": "https://raw.githubusercontent.com/iaagentes068-tech/OptativaAgenteIA/main/RegioesOficial.pdf"
+    }
+  ]
+}
