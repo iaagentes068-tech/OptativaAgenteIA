@@ -1,0 +1,701 @@
+{
+  "name": "JogoMissao EA3",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Informe um JSON contendo o nivel e as areas_desbloqueadas do jogador.\nExemplo: \n{\n  \"nivel\": 2,\n  \"areas_desbloqueadas\": [\n    \"Vila de Elden\",\n    \"Floresta Sombria\"\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -620,
+        280
+      ],
+      "id": "eff61639-cfd4-4f1a-91e5-a32bc687a911",
+      "name": "When chat message received",
+      "webhookId": "9253b19b-c51d-409a-a768-e686a4254f09",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "systemMessage": "# Prompt de Comportamento — Agente de Missões de Eldoria\n\nVocê é um agente de IA responsável por gerar missões para um jogo de ação e combate ambientado no mundo de Eldoria. As missões devem respeitar o nível do jogador, suas áreas desbloqueadas, o histórico de missões anteriores e as informações recuperadas do RAG.\n\n---\n\n## 1. Entrada do Jogador\n\nA entrada deve ser um JSON válido contendo os campos `id_jogador`, `nivel` e `areas_desbloqueadas`.\n\n**Exemplo de Entrada:**\n```json\n{\n  \"id_jogador\": \"jogador_001\",\n  \"nivel\": 2,\n  \"areas_desbloqueadas\": [\n    \"Vila de Elden\",\n    \"Floresta Sombria\"\n  ]\n}\n\nid_jogador: identificador único do jogador.\nnivel: número inteiro positivo que representa o nível do jogador.\nareas_desbloqueadas: lista de nomes de regiões que o jogador pode acessar.\nSe a entrada estiver ausente ou inválida, solicite os dados corretos antes de gerar uma missão.\n2. Busca Obrigatória no RAG e Consulta de Histórico\nConsulta ao Histórico (Supabase2)\nConsulta prévia obrigatória: Antes de criar qualquer nova missão, utilize a ferramenta Supabase2 para consultar o histórico de missões do jogador usando o id_jogador.\nAnálise de variedade: Analise as missões anteriores para diversificar os tipos de missão, alvos e locais, priorizando alternar o tipo em relação à missão gerada mais recentemente.\nPrevenção de duplicatas: Nunca repita um título (titulo) ou descrição (texto) registrado no histórico do jogador. Cada nova missão deve ser inédita.\nHistórico indisponível: Se a ferramenta Supabase2 não retornar missões anteriores ou falhar, prossiga normalmente sem o histórico, mantendo todas as demais regras de validação.\nBusca no RAG (Fonte Única de Verdade)\nProcure os nomes oficiais, identificadores e relacionamentos no RAG antes de utilizá-los. Não invente nomes ou IDs e não utilize conhecimento externo.\nRegra de Formatação e Extração de IDs:\nPara Inimigos (missões de Combater), o id_objetivo deve ser obrigatoriamente o próprio nome do inimigo validado no documento oficial de inimigos.\nPara Itens (missões de Coletar ou Recompensa de Item), o id_objetivo / id_recompensa deve ser o número de identificação oficial extraído estritamente do documento de itens.\nProibição absoluta de inventar IDs: Se o documento não trouxer explicitamente os dados oficiais, interrompa a geração e informe que faltam dados. Nunca chute ou invente um ID.\nConfirme a relação entre as entidades. Encontrar um inimigo/item e uma região nos documentos não comprova que a entidade pertence àquela região.\nSe a primeira busca não retornar dados suficientes, realize buscas adicionais refinadas.\nSe, após as buscas, não houver informações suficientes e confirmadas para criar uma missão válida, interrompa e informe que não foi possível gerar a missão com os dados disponíveis.\n3. Validação Obrigatória das Áreas Desbloqueadas\nCompare cada nome de areas_desbloqueadas com as regiões oficiais confirmadas no RAG.\nSe qualquer região informada não existir no universo de Eldoria, interrompa o processo e informe o erro ao usuário.\nSe todas as regiões forem válidas, escolha exclusivamente uma das regiões presentes em areas_desbloqueadas para situar a missão.\nNunca gere uma missão em uma região bloqueada.\n4. Regras para Criar Missões\nTipos de Objetivos Permitidos:\nCombater\nColetar\nPriorize alternar entre Combater e Coletar com base na última missão registrada no histórico do Supabase2.\nMissões de Combater:\nAntes de criar uma missão de Combater, confirme no RAG que:\nO inimigo existe, possui um nome oficial e que o id_objetivo corresponde exatamente ao nome do inimigo.\nO inimigo habita a região escolhida.\nO nível/dificuldade do inimigo é compatível com o nivel do jogador.\nMissões de Coletar:\nBefore de criar uma missão de Coletar, confirme no RAG que:\nO item existe, possui um nome oficial e um identificador numérico oficial (id_objetivo) explicitamente documentado no doc de itens.\nO item pode ser coletado no ambiente da região escolhida.\n5. NPCs e Narrativa\nLeon, localizado na Vila de Elden, é o único NPC responsável por entregar missões.\nO campo texto deve ser estritamente impessoal e escrito em terceira pessoa. Leon não deve narrar a missão nem ter falas atribuídas.\nUse construções impessoais em português do Brasil (pt-BR) como:\n\"Há relatos de criaturas hostis na região...\"\n\"Foram encontrados indícios de recursos naturais...\"\n\"A presença de inimigos tem sido observada nas proximidades...\"\n6. Recompensas (recompensas)\nAs recompensas devem ser coerentes com o nível do jogador.\nLos tipos permitidos são SOMENTE: \"Ouro\", \"Experiência\" ou \"Item\".\nAs quantidades de Ouro e Experiência não precisam estar no RAG e podem ser calculadas pelo balanceamento de nível. Para estes dois tipos, o id_recompensa deve ser sempre 0.\nSe a recompensa incluir um Item, consulte o documento de itens para extrair o ID numérico oficial correspondente ao id_recompensa. Nunca invente o ID de um item.\nInclua na lista apenas as recompensas efetivamente concedidas.\nRegra de Balanceamento de Ouro e XP: Os valores das recompensas devem respeitar os seguintes intervalos, calculados com base no nivel do jogador:\nExperiência: entre nivel * 5 e nivel * 12.\nOuro: entre nivel * 3 e nivel * 8.\nEscolha valores inteiros dentro desses intervalos, considerando a dificuldade da missão.\nNunca ultrapasse os limites estabelecidos.Exemplo para nível 2:\nXP: 10 a 24.\nOuro: 6 a 16.\n7. Formato Obrigatório da Resposta (JSON Output)\nQuando a entrada be válida e houver informações suficientes, retorne EXCLUSIVAMENTE um objeto JSON válido, sem qualquer texto, introdução, explicação ou marcação adicional fora do JSON.\nImportante: TODAS as chaves estruturais e valores do JSON de saída devem estar estritamente em português.\nModelo Estrutural de Exemplo:\n{\n  \"id_jogador\": \"jogador_001\",\n  \"titulo\": \"Reabastecimento Vital\",\n  \"texto\": \"Vários aventureiros retornaram feridos após ataques nas patrulhas recentes. Ajude a reabastecer os estoques de cura e contenha a ameaça dos lobos na floresta sombria.\",\n  \"objetivos\": [\n    {\n      \"tipo_objetivo\": \"Coletar\",\n      \"id_objetivo\": \"2\",\n      \"alvo\": \"Poção de Cura\",\n      \"quantidade_necessaria\": 4,\n      \"regiao\": \"Vila de Elden\"\n    },\n    {\n      \"tipo_objetivo\": \"Combater\",\n      \"id_objetivo\": \"Lobo Sombrio\",\n      \"alvo\": \"Lobo Sombrio\",\n      \"quantidade_necessaria\": 3,\n      \"regiao\": \"Floresta Sombria\"\n    }\n  ],\n  \"recompensas\": [\n    {\n      \"tipo_recompensa\": \"Ouro\",\n      \"id_recompensa\": 0,\n      \"quantidade\": 10\n    },\n    {\n      \"tipo_recompensa\": \"Experiência\",\n      \"id_recompensa\": 0,\n      \"quantidade\": 15\n    },\n    {\n      \"tipo_recompensa\": \"Item\",\n      \"id_recompensa\": 1,\n      \"quantidade\": 1\n    }\n  ]\n}\nRegras Detalhadas dos Campos:\nid_jogador: string com o identificador único do jogador.\ntitulo: string com um título curto, temático e inédito no histórico.\ntexto: descrição impessoal da missão em 3ª pessoa, sem diálogos e inédita no histórico.\nobjetivos: array contendo 1 ou mais objetos de objetivo.\ntipo_objetivo: string, aceita SOMENTE \"Coletar\" ou \"Combater\".\nid_objetivo: string contendo o ID oficial (se for item, o número correspondente do doc de itens; se for inimigo, o próprio nome do inimigo).\nalvo: nome oficial do inimigo ou item confirmado no RAG.\nquantidade_necessaria: número inteiro positivo (> 0).\nregiao: nome oficial da região validada e desbloqueada onde o objetivo ocorre.\nrecompensas: array contendo 1 ou mais objetos de recompensa.\ntipo_recompensa: string, aceita SOMENTE \"Ouro\", \"Experiência\" ou \"Item\".\nid_recompensa: inteiro. Use 0 quando o tipo for \"Ouro\" ou \"Experiência\". Se for \"Item\", use o ID numérico oficial do item verificado no documento de itens.\nquantidade: número inteiro positivo (> 0).\nNota: Os valores contidos no modelo acima são meramente ilustrativos. Os dados finais devem ser gerados dinamicamente com base nas consultas realizadas.\n8. Validação Final Obrigatória\nAntes de enviar a resposta final ao cliente, execute a seguinte verificação:\nO JSON de entrada foi validado com sucesso.\nO histórico do jogador no Supabase2 foi consultado e considerado para evitar repetições.\nTodas as regiões de areas_desbloqueadas foram validadas no RAG.\nA região atribuída aos objetivos pertence à lista de áreas desbloqueadas do jogador.\nOs nomes e IDs de alvos (id_objetivo) e itens de recompensa (id_recompensa) foram confirmados diretamente nos docs corretos (inimigo usa o próprio nome como ID; itens usam os IDs numéricos oficiais do doc de itens).\nA relação entre cada alvo e sua respectiva região foi explicitamente confirmada no RAG.\nO id_recompensa para \"Ouro\" e \"Experiência\" é exatamente 0.\nOs valores de Ouro e Experiência respeitam estritamente a régua matemática com base no nível do jogador.\nTodo o JSON de saída (chaves e valores) está estritamente em português.\nA estrutura de saída é um JSON sintaticamente perfeito e formatado com indentação de 2 espaços.\nRegra Final: Nunca substitua uma busca no RAG por uma suposição. A variedade de gameplay e originalidade jamais justificam a invenção de dados ou de IDs.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        220,
+        240
+      ],
+      "id": "3cc172b3-7a99-43a3-9129-0c8129af7685",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        160,
+        480
+      ],
+      "id": "b11ad018-b76a-4176-b6fd-257bb4106680",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "Vu1AvwVeLUcvBTMt",
+          "name": "OpenAi account 23"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').first().json.body.id_jogador }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -620,
+        160
+      ],
+      "id": "6b9609bd-93b9-45c7-9f24-1dce6add824c",
+      "name": "Simple Memory",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "value": "iaagentes068-tech",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "OptativaAgenteIA",
+          "mode": "name"
+        },
+        "filePath": "ArquivosEA3.json",
+        "additionalParameters": {}
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "98ea2ca1-71e5-416b-9ff2-fdada45e9b8c",
+      "name": "GitHub",
+      "webhookId": "8e040f2d-2ca1-4137-ba14-d8ed2153b62b",
+      "credentials": {
+        "githubApi": {
+          "id": "tHj3HzHXWfNclD8f",
+          "name": "GitHub account 21"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{$json[\"link_pdf\"]}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "3ca5af3d-f3fc-4bc6-9649-ff4d64b84797",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        660,
+        0
+      ],
+      "id": "590f8af9-2be3-4852-b38c-513430892e78",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1) Recebe os itens do nó anterior\nlet docs = $input.all().map(i => i.json);\n\nif (Array.isArray(docs[0])) {\n  docs = docs[0];\n}\n\n// 2) Limpa o texto extraído\nconst clean = (s = '') =>\n  s.replace(/\\u00ad/g, '')\n   .replace(/[ \\t]+\\n/g, '\\n')\n   .replace(/\\n{3,}/g, '\\n\\n')\n   .trim();\n\n// 3) Prepara os chunks estruturados por seções/fichas\nconst out = [];\n\nfor (const d of docs) {\n  const fullText = clean(d.text || '');\n\n  if (!fullText) continue;\n\n  // Divide o texto pelos divisores visuais dos seus documentos\n  const sections = fullText.split(/-------------------------------------------------------------------------------|===============================================================================/);\n\n  let chunkIdx = 1;\n\n  for (const sec of sections) {\n    const cleanSection = sec.trim();\n\n    // Filtra cabeçalhos curtos ou blocos vazios\n    if (cleanSection.length > 30) {\n      out.push({\n        json: {\n          text: cleanSection,\n          metadata: {\n            titulo: d.titulo || 'Documento de Eldoria',\n            author: d.autor || 'Grupo de Agentes de IA — Optativa',\n            ano: d.ano || 2026,\n            source: d.link_pdf || '',\n            pages: d.numpages || null,\n            pdf_version: d.info?.PDFFormatVersion || null,\n            chunk: chunkIdx++\n          }\n        }\n      });\n    }\n  }\n}\n\nreturn out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        860,
+        0
+      ],
+      "id": "99e88db5-f798-4a74-9d48-12433bdac83b",
+      "name": "Chunk"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pega dinamicamente o primeiro buffer binário disponível, evitando o erro de nome\nconst binaryKey = Object.keys($input.item.binary || {})[0];\nif (!binaryKey) {\n  throw new Error(\"Nenhum arquivo binário foi encontrado na entrada do nó.\");\n}\n\nconst binaryData = await this.helpers.getBinaryDataBuffer(0, binaryKey);\nconst raw = binaryData.toString('utf-8');\n\n// Converte o texto do JSON em objeto\nconst data = JSON.parse(raw);\n\n// Mapeia cada artigo do JSON como um item separado para o fluxo\nreturn data.artigos.map((a, i) => ({\n  json: {\n    id: i + 1,\n    titulo: a.titulo,\n    autor: a.autor,\n    ano: a.ano,\n    link_pdf: a.link_pdf\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "7eb681a3-f1d0-44df-9e2a-b97b199978a6",
+      "name": "Code - Converte JSON",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -180,
+        0
+      ],
+      "id": "b6b07f7e-9a20-4cec-86cc-180a37523d0e",
+      "name": "When clicking ‘Execute workflow’",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "docs",
+          "mode": "id"
+        },
+        "embeddingBatchSize": 250,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        1080,
+        0
+      ],
+      "id": "a10e447b-f0c4-416b-9a15-86a75de24ce4",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "md1YSid6q1poPwjf",
+          "name": "Supabase account 11"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1060,
+        200
+      ],
+      "id": "f305ac7d-bdb1-4add-b074-b48b6c0fa818",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "Vu1AvwVeLUcvBTMt",
+          "name": "OpenAi account 23"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        200
+      ],
+      "id": "0e1466e0-9e06-42b2-9d31-54f37427a61b",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Consulte a base de conhecimento do universo do jogo sempre que precisar obter informações sobre a história, regiões, personagens, inimigos ou itens. Utilize essas informações para criar missões coerentes com o universo e com o estado atual do jogador. Não invente elementos que não estejam presentes na base de conhecimento.",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "topK": 30,
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        480
+      ],
+      "id": "492f6a42-33b3-444a-a5ff-64e77a7f6104",
+      "name": "Supabase Vector Store2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "md1YSid6q1poPwjf",
+          "name": "Supabase account 11"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        520,
+        620
+      ],
+      "id": "549c5192-00c2-46de-b38d-95ed1be9de94",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "Vu1AvwVeLUcvBTMt",
+          "name": "OpenAi account 23"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "62505188-2ba5-48fd-8513-3c81a41e5da1",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -280,
+        320
+      ],
+      "id": "749e9dec-e409-47fe-b780-fd0909d01d48",
+      "name": "Webhook",
+      "webhookId": "62505188-2ba5-48fd-8513-3c81a41e5da1",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        840,
+        360
+      ],
+      "id": "60d0e26d-55b8-4c91-a113-e95b6ca40cdb",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pega o texto gerado pelo agente de IA com segurança\nlet inputData = $input.item?.json || {};\nlet rawText = inputData.output || inputData.text || Object.values(inputData)[0];\n\n// Se mesmo assim vier vazio, retorna um objeto padrão para não quebrar o fluxo\nif (!rawText || typeof rawText !== 'string') {\n  return [{ json: { error: \"Nenhum texto recebido do agente\", raw: inputData } }];\n}\n\n// Remove as crases de markdown (```json e ```) se elas existirem\nlet cleanText = rawText.replace(/```json/g, \"\").replace(/```/g, \"\").trim();\n\n// Transforma a string limpa num objeto JSON real\nlet jsonOutput;\ntry {\n  jsonOutput = JSON.parse(cleanText);\n} catch (e) {\n  jsonOutput = { text: cleanText }; // Se não for um JSON válido, guarda como texto puro\n}\n\n// Retorna o JSON limpo para o fluxo do n8n\nreturn [{ json: jsonOutput }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        620,
+        240
+      ],
+      "id": "278699c2-4673-480d-bd88-c1aecc4c885a",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Create a row in Supabase",
+        "tableId": "Missoes",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "id_jogador",
+              "fieldValue": "={{ $('Code').item.json.id_jogador }}"
+            },
+            {
+              "fieldId": "titulo",
+              "fieldValue": "={{ $('Code').item.json.titulo }}"
+            },
+            {
+              "fieldId": "tipo",
+              "fieldValue": "={{ $('Code').item.json.tipo }}"
+            },
+            {
+              "fieldId": "texto",
+              "fieldValue": "={{ $('Code').item.json.texto }}"
+            },
+            {
+              "fieldId": "acao",
+              "fieldValue": "={{ $('Code').item.json.acao }}"
+            },
+            {
+              "fieldId": "alvo",
+              "fieldValue": "={{ $('Code').item.json.alvo }}"
+            },
+            {
+              "fieldId": "quantidade",
+              "fieldValue": "={{ $('Code').item.json.quantidade }}"
+            },
+            {
+              "fieldId": "local",
+              "fieldValue": "={{ $('Code').item.json.local }}"
+            },
+            {
+              "fieldId": "xp",
+              "fieldValue": "={{ $('Code').item.json.recompensa.xp }}"
+            },
+            {
+              "fieldId": "itens",
+              "fieldValue": "={{ $('Code').item.json.itens }}"
+            },
+            {
+              "fieldId": "ouro",
+              "fieldValue": "={{ $('Code').item.json.ouro }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        -740,
+        220
+      ],
+      "id": "bd5c5079-6947-45ec-bba0-9365d962c110",
+      "name": "Supabase1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "md1YSid6q1poPwjf",
+          "name": "Supabase account 11"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "tableId": "missoes",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "id_jogador",
+              "fieldValue": "={{ $json.id_jogador }}"
+            },
+            {
+              "fieldId": "titulo",
+              "fieldValue": "={{ $json.titulo }}"
+            },
+            {
+              "fieldId": "texto",
+              "fieldValue": "={{ $json.texto }}"
+            },
+            {
+              "fieldId": "acao",
+              "fieldValue": "={{ $json.objetivos[0].tipo_objetivo }}"
+            },
+            {
+              "fieldId": "alvo",
+              "fieldValue": "={{ $json.objetivos[0].alvo }}"
+            },
+            {
+              "fieldId": "quantidade",
+              "fieldValue": "={{ $json.objetivos[0].quantidade_necessaria }}"
+            },
+            {
+              "fieldId": "local",
+              "fieldValue": "={{ $json.objetivos[0].regiao }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "ativa"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        840,
+        560
+      ],
+      "id": "28a145aa-7e18-4e47-963e-c9584e206510",
+      "name": "Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "md1YSid6q1poPwjf",
+          "name": "Supabase account 11"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Consulta as missões existentes no banco de dados.",
+        "operation": "getAll",
+        "tableId": "missoes"
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        320,
+        480
+      ],
+      "id": "936a73ad-fa09-4da5-9e7a-db11c0fc43ea",
+      "name": "Supabase2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "md1YSid6q1poPwjf",
+          "name": "Supabase account 11"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "UnityQuest",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -40,
+        240
+      ],
+      "id": "4b66a83e-9710-4049-94a9-d7337b97f9ab",
+      "name": "Webhook1",
+      "webhookId": "152a1480-eda8-47cd-956f-cac86085554a"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        []
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        []
+      ]
+    },
+    "GitHub": {
+      "main": [
+        [
+          {
+            "node": "Code - Converte JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Chunk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Converte JSON": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chunk": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store2": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store2",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        []
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase1": {
+      "ai_tool": [
+        []
+      ]
+    },
+    "Supabase2": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a0e4e7f5-2971-4500-a1db-7c66a97bf1e1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2ef09b3ff7c0d13f07784f5a16ad0714adec809b2e8496f0ab7a6deb36f32a14"
+  },
+  "id": "E3kfNacv4Uwe25kU",
+  "tags": []
+}
