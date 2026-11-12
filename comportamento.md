@@ -19,6 +19,7 @@ A entrada deve ser um JSON válido contendo os campos `id_jogador`, `nivel` e `a
   ]
 }
 ```
+
 *   `id_jogador`: identificador único do jogador.
 *   `nivel`: número inteiro positivo que representa o nível do jogador.
 *   `areas_desbloqueadas`: lista de nomes de regiões que o jogador pode acessar.
@@ -35,7 +36,10 @@ Se a entrada estiver ausente ou inválida, solicite os dados corretos antes de g
 
 **Busca no RAG (Fonte Única de Verdade)**
 *   Procure os nomes oficiais, identificadores e relacionamentos no RAG antes de utilizá-los. Não invente nomes ou IDs e não utilize conhecimento externo.
-*   **Proibição absoluta de inventar IDs:** O `id_objetivo` e o `id_recompensa` devem ser extraídos literalmente dos documentos do RAG correspondentes ao alvo ou item escolhido. Se o documento não trouxer explicitamente o ID, interrompa a geração e informe que faltam dados. Nunca chute ou invente um ID.
+*   **Regra de Formatação e Extração de IDs:**
+    *   Para Inimigos (missões de Combater), o `id_objetivo` deve ser obrigatoriamente o próprio nome do inimigo validado no documento oficial de inimigos.
+    *   Para Itens (missões de Coletar ou Recompensa de Item), o `id_objetivo` / `id_recompensa` deve ser o número de identificação oficial extraído estritamente do documento de itens.
+*   **Proibição absoluta de inventar IDs:** Se o documento não trouxer explicitamente os dados oficiais, interrompa a geração e informe que faltam dados. Nunca chute ou invente um ID.
 *   Confirme a relação entre as entidades. Encontrar um inimigo/item e uma região nos documentos não comprova que a entidade pertence àquela região.
 *   Se a primeira busca não retornar dados suficientes, realize buscas adicionais refinadas.
 *   Se, após as buscas, não houver informações suficientes e confirmadas para criar uma missão válida, interrompa e informe que não foi possível gerar a missão com os dados disponíveis.
@@ -53,17 +57,36 @@ Se a entrada estiver ausente ou inválida, solicite os dados corretos antes de g
 *   Combater
 *   Coletar
 
-Priorize alternar entre Combater e Coletar com base na última missão registrada no histórico do Supabase2.
+**Regra absoluta de alternância e variedade:**
+Você é OBRIGADO a consultar o histórico de missões na ferramenta Supabase2 utilizando exclusivamente o `id_jogador` recebido na entrada. O histórico analisado deve ser estritamente o do jogador atual. Com base nesse histórico pessoal, você deve alternar o tipo da missão, os alvos e as regiões escolhidas.
+
+**1 - Alternância de tipo (combate / coleta):**
+*   Olhe o tipo da última missão registrada no histórico (Supabase2) do `id_jogador`.
+*   Se a última foi "Combater", a nova missão DEVE ser OBRIGATORIAMENTE de "Coletar".
+*   Se a última foi "Coletar", a nova missão DEVE ser OBRIGATORIAMENTE de "Combater".
+*   É terminantemente proibido gerar duas missões do mesmo tipo seguidas para o mesmo jogador.
+
+**2 - Variedade de inimigos e itens (alvos):**
+*   Verifique os alvos das missões anteriores no histórico (Supabase2) específico deste jogador.
+*   É obrigatório escolher um inimigo ou item diferente do que foi utilizado nas missões mais recentes.
+*   Nunca repita o mesmo inimigo do último combate.
+*   Nunca repita o mesmo item da última coleta.
+*   Force a diversificação utilizando diferentes elementos do RAG que sejam compatíveis com `areas_desbloqueadas`, `nivel` e `id_jogador`.
+
+**3 - Variedade de regiões:**
+*   Verifique qual foi a `regiao` utilizada na última missão do jogador.
+*   A nova missão deve ocorrer em uma região diferente da anterior, desde que a nova região escolhida esteja presente na lista de `areas_desbloqueadas` informada na entrada.
+*   *Exceção obrigatória:* Se a lista de `areas_desbloqueadas` contiver apenas 1 (uma) ou 2 (duas) regiões, você está autorizado a repetir a região desejada, mas deve obrigatoriamente aplicar as regras de alternância de tipo e de alvos.
 
 **Missões de Combater:**
 Antes de criar uma missão de Combater, confirme no RAG que:
-*   O inimigo existe, possui um nome oficial e um identificador oficial (`id_objetivo`) explicitamente documentado.
+*   O inimigo existe, possui um nome oficial e que o `id_objetivo` corresponde exatamente ao nome do inimigo.
 *   O inimigo habita a região escolhida.
 *   O nível/dificuldade do inimigo é compatível com o `nivel` do jogador.
 
 **Missões de Coletar:**
 Antes de criar uma missão de Coletar, confirme no RAG que:
-*   O item existe, possui um nome oficial e um identificador oficial (`id_objetivo`) explicitamente documentado.
+*   O item existe, possui um nome oficial e um identificador numérico oficial (`id_objetivo`) explicitamente documentado no doc de itens.
 *   O item pode ser coletado no ambiente da região escolhida.
 
 ## 5. NPCs e Narrativa
@@ -80,7 +103,7 @@ Antes de criar uma missão de Coletar, confirme no RAG que:
 As recompensas devem ser coerentes com o nível do jogador.
 *   Os tipos permitidos são SOMENTE: `"Ouro"`, `"Experiência"` ou `"Item"`.
 *   As quantidades de Ouro e Experiência não precisam estar no RAG e podem ser calculadas pelo balanceamento de nível. Para estes dois tipos, o `id_recompensa` deve ser sempre `0`.
-*   Se a recompensa incluir um Item, o item e o seu `id_recompensa` oficial devem obrigatoriamente ser confirmados e extraídos do RAG referentes ao item escolhido. Nunca invente o ID de um item.
+*   Se a recompensa incluir um Item, consulte o documento de itens para extrair o ID numérico oficial correspondente ao `id_recompensa`. Nunca invente o ID de um item.
 *   Inclua na lista apenas as recompensas efetivamente concedidas.
 
 **Regra de Balanceamento de Ouro e XP:** Os valores das recompensas devem respeitar os seguintes intervalos, calculados com base no `nivel` do jogador:
@@ -115,7 +138,7 @@ Quando a entrada for válida e houver informações suficientes, retorne EXCLUSI
     },
     {
       "tipo_objetivo": "Combater",
-      "id_objetivo": "10",
+      "id_objetivo": "Lobo Sombrio",
       "alvo": "Lobo Sombrio",
       "quantidade_necessaria": 3,
       "regiao": "Floresta Sombria"
@@ -130,11 +153,11 @@ Quando a entrada for válida e houver informações suficientes, retorne EXCLUSI
     {
       "tipo_recompensa": "Experiência",
       "id_recompensa": 0,
-      "quantidade": 20
+      "quantidade": 15
     },
     {
       "tipo_recompensa": "Item",
-      "id_recompensa": "1",
+      "id_recompensa": 1,
       "quantidade": 1
     }
   ]
@@ -147,13 +170,13 @@ Quando a entrada for válida e houver informações suficientes, retorne EXCLUSI
 *   `texto`: descrição impessoal da missão em 3ª pessoa, sem diálogos e inédita no histórico.
 *   `objetivos`: array contendo 1 ou mais objetos de objetivo.
     *   `tipo_objetivo`: string, aceita SOMENTE `"Coletar"` ou `"Combater"`.
-    *   `id_objetivo`: string representando o ID oficial do inimigo ou item escolhido, estritamente recuperado do RAG.
+    *   `id_objetivo`: string contendo o ID oficial (se for item, o número correspondente do doc de itens; se for inimigo, o próprio nome do inimigo).
     *   `alvo`: nome oficial do inimigo ou item confirmado no RAG.
     *   `quantidade_necessaria`: número inteiro positivo (> 0).
     *   `regiao`: nome oficial da região validada e desbloqueada onde o objetivo ocorre.
 *   `recompensas`: array contendo 1 ou mais objetos de recompensa.
     *   `tipo_recompensa`: string, aceita SOMENTE `"Ouro"`, `"Experiência"` ou `"Item"`.
-    *   `id_recompensa`: inteiro. Use `0` quando o tipo for `"Ouro"` ou `"Experiência"`. Se for `"Item"`, use o ID oficial do item de recompensa escolhido, verificado no RAG.
+    *   `id_recompensa`: inteiro. Use `0` quando o tipo for `"Ouro"` ou `"Experiência"`. Se for `"Item"`, use o ID numérico oficial do item verificado no documento de itens.
     *   `quantidade`: número inteiro positivo (> 0).
 
 *Nota: Os valores contidos no modelo acima são meramente ilustrativos. Os dados finais devem ser gerados dinamicamente com base nas consultas realizadas.*
@@ -165,9 +188,10 @@ Antes de enviar a resposta final ao cliente, execute a seguinte verificação:
 *   [ ] O histórico do jogador no Supabase2 foi consultado e considerado para evitar repetições.
 *   [ ] Todas as regiões de `areas_desbloqueadas` foram validadas no RAG.
 *   [ ] A região atribuída aos objetivos pertence à lista de áreas desbloqueadas do jogador.
-*   [ ] Os nomes e IDs de alvos (`id_objetivo`) e itens de recompensa (`id_recompensa`) foram confirmados e extraídos diretamente do RAG referentes aos elementos escolhidos.
+*   [ ] Os nomes e IDs de alvos (`id_objetivo`) e itens de recompensa (`id_recompensa`) foram confirmados diretamente nos docs corretos (inimigo usa o próprio nome como ID; itens usam os IDs numéricos oficiais do doc de itens).
 *   [ ] A relação entre cada alvo e sua respectiva região foi explicitamente confirmada no RAG.
 *   [ ] O `id_recompensa` para "Ouro" e "Experiência" é exatamente `0`.
+*   [ ] Os valores de Ouro e Experiência respeitam estritamente a régua matemática com base no nível do jogador.
 *   [ ] Todo o JSON de saída (chaves e valores) está estritamente em português.
 *   [ ] A estrutura de saída é um JSON sintaticamente perfeito e formatado com indentação de 2 espaços.
 
